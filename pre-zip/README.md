@@ -1,0 +1,113 @@
+# Rosatom RAG
+
+## Идея проекта
+
+Цель проекта — построить систему, которая:
+
+1. принимает корпус нормативных документов;
+2. извлекает из них текст;
+3. разбивает текст на чанки;
+4. строит поисковые индексы;
+5. находит наиболее релевантные фрагменты по запросу;
+6. передает найденный контекст в локальную LLM;
+7. получает итоговый ответ с опорой на retrieved-контекст.
+
+## Что уже реализовано
+
+### 1. Ingest документов
+Поддерживается извлечение текста из:
+- PDF
+- DOCX
+
+Результат сохраняется в текстовом виде в `data/processed/extracted_text`.
+
+### 2. Чанкование корпуса
+Извлеченные тексты разбиваются на чанки и сохраняются в:
+- `data/processed/chunks/ntd_chunks.jsonl`
+
+Для чанков сохраняются:
+- `chunk_id`
+- `source_file`
+- `source_stem`
+- `page_num`
+- позиционная информация
+- текст чанка
+
+### 3. Dense retrieval
+Реализовано построение FAISS-индекса по embeddings чанков.
+
+Используется локальная embedding-модель:
+- `SentenceTransformer`
+- обертка `LocalSentenceTransformerEmbeddings`
+
+### 4. Sparse retrieval
+Реализован BM25 по текстам чанков.
+
+### 5. Exact reference search
+Для запросов с явными ссылками на:
+- таблицы
+- пункты
+- разделы
+- главы
+
+реализован отдельный exact reference search.
+
+### 6. Reranking
+После объединения кандидатов из разных retrieval-каналов применяется reranker.
+
+### 7. Генерация ответа локальной LLM
+Ответ строится через локальный `llama.cpp` сервер с OpenAI-compatible API.
+
+### 8. NER-ветка
+Отдельно реализован экспериментальный NER-пайплайн:
+- предсказание сущностей по чанкам;
+- сохранение сущностей в `data/ner/predictions/...`;
+- построение entity-index;
+- retrieval по entity-index через `entity BM25`;
+- сравнение baseline retrieval и NER-enhanced retrieval.
+
+---
+
+## Текущая архитектура пайплайна
+
+### Базовый retrieval-пайплайн
+`FAISS + BM25 + exact ref + reranker`
+
+### NER-enhanced retrieval-пайплайн
+`FAISS + BM25 + exact ref + entity BM25 + reranker`
+
+---
+
+## Общая схема работы
+
+### Шаг 1. Подготовка корпуса
+Сырые документы кладутся в:
+- `data/raw/ntd`
+
+### Шаг 2. Извлечение текста
+Из PDF и DOCX извлекается текст и сохраняется в:
+- `data/processed/extracted_text`
+
+### Шаг 3. Чанкование
+Тексты разбиваются на чанки:
+- `data/processed/chunks/ntd_chunks.jsonl`
+
+### Шаг 4. Построение индексов
+Строятся:
+- dense index (FAISS)
+- sparse index (BM25 по тексту)
+- при необходимости entity-index для NER-экспериментов
+
+### Шаг 5. Retrieval
+По вопросу запускаются retrieval-каналы:
+- dense retrieval
+- sparse retrieval
+- exact reference search
+- опционально entity retrieval
+
+### Шаг 6. Reranking
+Кандидаты объединяются и переставляются reranker-моделью.
+
+### Шаг 7. Генерация ответа
+Финальный top-k контекст передается в локальную LLM, которая формирует ответ.
+

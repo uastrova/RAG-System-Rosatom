@@ -1,0 +1,13 @@
+[
+  "O",
+  "B-ORG",
+  "I-ORG",
+  "B-DATE",
+  "I-DATE",
+  "B-ADDRESS",
+  "I-ADDRESS",
+  "B-NORM_DOC",
+  "I-NORM_DOC",
+  "B-NORM_REF",
+  "I-NORM_REF"
+]

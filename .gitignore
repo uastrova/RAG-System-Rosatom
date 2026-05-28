@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+.env/
+venv/
+.venv/
+
+# System
+.DS_Store
+.idea/
+.vscode/
+
+# Large project data
+data/raw/
+data/processed/
+data/eval/
+data/ner/predictions/
+data/ner/entity_index/
+
+# Models and indexes
+models/
+*.bin
+*.safetensors
+*.gguf
+*.faiss
+*.pkl
+
+# Secrets
+.env
+*.key
+*.pem

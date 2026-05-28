@@ -1,0 +1,11 @@
+from .config import (
+    PROJECT_ROOT,
+    DATA_DIR,
+    RAW_DIR,
+    PROCESSED_DIR,
+    EXTRACTED_TEXT_DIR,
+    CHUNKS_DIR,
+    VECTORSTORE_DIR,
+    MODELS_DIR,
+    EMB_MODEL_DIR,
+)
