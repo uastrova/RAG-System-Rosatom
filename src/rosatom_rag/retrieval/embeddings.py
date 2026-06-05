@@ -4,6 +4,9 @@ from sentence_transformers import SentenceTransformer
 from langchain_core.embeddings import Embeddings
 
 
+# делаем локальную модель Sbert NLU совместимой с LangChain 
+
+
 class LocalSentenceTransformerEmbeddings(Embeddings):
     def __init__(self, model_path: str, device: str = None):
         if device is None:

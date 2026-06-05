@@ -1,12 +1,11 @@
 from pathlib import Path
 import json
 import re
-
 from rosatom_rag.config import EXTRACTED_TEXT_DIR, CHUNKS_DIR
 from rosatom_rag.utils import print_header
 
 
-PAGE_PATTERN = re.compile(r"--- PAGE (\d+) ---\n", re.MULTILINE)
+PAGE_PATTERN = re.compile(r"--- PAGE (\d+) ---\n")
 TABLE_BLOCK_PATTERN = re.compile(r"\[TABLE_START\].*?\[TABLE_END\]", re.DOTALL)
 
 
@@ -57,7 +56,14 @@ def split_paragraphs(text: str):
         return []
 
     parts = re.split(r"\n\s*\n", text)
-    return [clean_text(p) for p in parts if clean_text(p)]
+
+    cleaned_parts = []
+    for part in parts:
+        cleaned = clean_text(part)
+        if cleaned:
+            cleaned_parts.append(cleaned)
+
+    return cleaned_parts
 
 
 def is_table_title(text: str) -> bool:
@@ -83,6 +89,7 @@ def extract_semantic_blocks(page_text: str):
         before = text[pos:match.start()]
         paragraphs = split_paragraphs(before)
 
+        # не стоят ли прямо перед таблицей название и подпись
         table_prefix = []
         if len(paragraphs) >= 2 and is_table_title(paragraphs[-2]) and is_short_caption(paragraphs[-1]):
             table_prefix = [paragraphs[-2], paragraphs[-1]]
@@ -130,9 +137,11 @@ def chunk_plain_text(text: str, chunk_size: int = 1200, overlap: int = 200):
 
     while start < text_len:
         end = min(start + chunk_size, text_len)
-
+        
         if end < text_len:
+            # режем чанки по последнему пробелу
             split_pos = text.rfind(" ", start, end)
+            # проверяем что чанк не слишком маленький
             if split_pos != -1 and split_pos > start + chunk_size // 2:
                 end = split_pos
 
@@ -296,16 +305,6 @@ def main():
 
     print("Всего chunks:", len(all_chunks))
     print("Сохранено в:", output_path)
-
-    print("\nПервые 3 chunks:")
-    for item in all_chunks[:3]:
-        print("-" * 80)
-        print("chunk_id:", item["chunk_id"])
-        print("source_file:", item["source_file"])
-        print("page_num:", item["page_num"])
-        print("chunk_type:", item["chunk_type"])
-        print(item["text"][:700])
-
 
 if __name__ == "__main__":
     main()

@@ -1,9 +1,7 @@
 from pathlib import Path
 import json
-
 from langchain_core.documents import Document
 from langchain_community.vectorstores import FAISS
-
 from rosatom_rag.config import CHUNKS_DIR, VECTORSTORE_DIR, EMB_MODEL_DIR
 from rosatom_rag.retrieval.embeddings import LocalSentenceTransformerEmbeddings
 from rosatom_rag.utils import print_header
@@ -21,7 +19,6 @@ def load_chunk_records(chunks_path: Path):
 
 def records_to_documents(records):
     documents = []
-
     for record in records:
         doc = Document(
             page_content=record["text"],
@@ -33,10 +30,10 @@ def records_to_documents(records):
                 "chunk_index_on_page": record["chunk_index_on_page"],
                 "char_start": record["char_start"],
                 "char_end": record["char_end"],
+                "chunk_type": record["chunk_type"],
             }
         )
         documents.append(doc)
-
     return documents
 
 
@@ -59,7 +56,7 @@ def main():
     print("Embedding-модель загружена")
 
     vectorstore = FAISS.from_documents(documents, embeddings)
-    print("FAISS-индекс построен")
+    print("FAISS построен")
 
     vectorstore.save_local(str(VECTORSTORE_DIR))
     print("Индекс сохранён в:", VECTORSTORE_DIR)

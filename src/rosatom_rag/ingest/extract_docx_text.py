@@ -1,13 +1,11 @@
 from pathlib import Path
 import re
-
 from docx import Document
 from docx.document import Document as DocumentType
 from docx.table import Table, _Cell
 from docx.text.paragraph import Paragraph
 from docx.oxml.table import CT_Tbl
 from docx.oxml.text.paragraph import CT_P
-
 from rosatom_rag.config import RAW_DIR, EXTRACTED_TEXT_DIR
 from rosatom_rag.utils import print_header
 
@@ -33,20 +31,6 @@ def iter_block_items(parent):
         elif isinstance(child, CT_Tbl):
             yield Table(child, parent)
 
-
-def iter_row_texts(row):
-    cells = []
-
-    for _ in range(row.grid_cols_before):
-        cells.append("")
-
-    for cell in row.cells:
-        cells.append(normalize_text(cell.text))
-
-    for _ in range(row.grid_cols_after):
-        cells.append("")
-
-    return cells
 
 
 def iter_row_texts(row):

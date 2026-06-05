@@ -1,17 +1,12 @@
 from pathlib import Path
 import json
 import re
+from rosatom_rag.config import PROJECT_ROOT , CHUNKS_DIR, EMB_MODEL_DIR
 
-
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-
-CHUNKS_PATH = PROJECT_ROOT / "data" / "processed" / "chunks" / "ntd_chunks.jsonl"
+CHUNKS_PATH = CHUNKS_DIR / "ntd_chunks.jsonl"
 OUTPUT_PATH = PROJECT_ROOT / "data" / "ner" / "labeled" / "manual_corpus.json"
-
 EXPORT_LIMIT = 1000
 MIN_TEXT_LEN = 80
-
-
 PATTERNS = {
     "NORM_DOC": [
         r"\bГОСТ(?:\s+Р)?(?:\s+IEC)?\s+\d[\d\.\-–—]*\b",
@@ -68,7 +63,6 @@ def make_record_id(record: dict) -> str:
 
 def find_entities_by_patterns(text: str):
     entities = []
-
     for label, patterns in PATTERNS.items():
         for pattern in patterns:
             for match in re.finditer(pattern, text, flags=re.IGNORECASE):
@@ -78,7 +72,6 @@ def find_entities_by_patterns(text: str):
                     "start": match.start(),
                     "end": match.end(),
                 })
-
     return entities
 
 
@@ -87,10 +80,9 @@ def remove_overlaps(entities):
         entities,
         key=lambda x: (x["start"], -(x["end"] - x["start"]))
     )
-
     filtered = []
     occupied = []
-
+    
     for ent in entities:
         s, e = ent["start"], ent["end"]
 
