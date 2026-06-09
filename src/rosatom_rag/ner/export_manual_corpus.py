@@ -5,8 +5,10 @@ from rosatom_rag.config import PROJECT_ROOT , CHUNKS_DIR, EMB_MODEL_DIR
 
 CHUNKS_PATH = CHUNKS_DIR / "ntd_chunks.jsonl"
 OUTPUT_PATH = PROJECT_ROOT / "data" / "ner" / "labeled" / "manual_corpus.json"
+
 EXPORT_LIMIT = 1000
 MIN_TEXT_LEN = 80
+
 PATTERNS = {
     "NORM_DOC": [
         r"\bГОСТ(?:\s+Р)?(?:\s+IEC)?\s+\d[\d\.\-–—]*\b",
@@ -82,7 +84,7 @@ def remove_overlaps(entities):
     )
     filtered = []
     occupied = []
-    
+
     for ent in entities:
         s, e = ent["start"], ent["end"]
 
@@ -102,7 +104,6 @@ def remove_overlaps(entities):
 
 def score_record(text: str, entities: list[dict]) -> int:
     score = 0
-
     label_counts = {}
     for ent in entities:
         label_counts[ent["label"]] = label_counts.get(ent["label"], 0) + 1
@@ -126,7 +127,6 @@ def score_record(text: str, entities: list[dict]) -> int:
 
 def export_record(record: dict, entities: list[dict], auto_score: int):
     record_id = make_record_id(record)
-
     return {
         "id": record_id,
         "source_file": record["source_file"],

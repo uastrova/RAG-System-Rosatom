@@ -4,13 +4,13 @@ import random
 from datasets import Dataset, DatasetDict
 from transformers import AutoTokenizer
 from rosatom_rag.ner.labels import LABEL_LIST, LABEL2ID
+from rosatom_rag.config import LABELED_DIR, SPLITS_DIR
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
+INPUT_PATH =  LABELED_DIR / "manual_corpus_final.jsonl"
+OUTPUT_DIR = SPLITS_DIR / "hf_rubert_dataset_no_docnum_v1"
+LABELS_PATH = SPLITS_DIR / "label_list_no_docnum_v1.json"
 
-INPUT_PATH = PROJECT_ROOT / "data" / "ner" / "labeled" / "manual_corpus_final.jsonl"
-OUTPUT_DIR = PROJECT_ROOT / "data" / "ner" / "splits" / "hf_rubert_dataset_no_docnum_v1"
-LABELS_PATH = PROJECT_ROOT / "data" / "ner" / "splits" / "label_list_no_docnum_v1.json"
 TOKENIZER_NAME = "ai-forever/ruBert-base"
 MAX_LENGTH = 384
 SEED = 42
