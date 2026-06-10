@@ -43,42 +43,32 @@
 ### 4. Sparse retrieval
 Реализован BM25 по текстам чанков.
 
-### 5. Exact reference search
-Для запросов с явными ссылками на:
-- таблицы
-- пункты
-- разделы
-- главы
-
-реализован отдельный exact reference search.
-
-### 6. Reranking
+### 5. Reranking
 После объединения кандидатов из разных retrieval-каналов применяется reranker.
 
-### 7. Генерация ответа локальной LLM
+### 6. Генерация ответа локальной LLM
 Ответ строится через локальный `llama.cpp` сервер с OpenAI-compatible API.
 
-### 8. NER-ветка
+### 7. NER-ветка
 Отдельно реализован экспериментальный NER-пайплайн:
 - предсказание сущностей по чанкам;
 - сохранение сущностей в `data/ner/predictions/...`;
-- построение entity-index;
-- retrieval по entity-index через `entity BM25`;
 - сравнение baseline retrieval и NER-enhanced retrieval.
 
 ---
 
-## Текущая архитектура пайплайна
+## Текущая архитектура пайплайна (для кейса)
 
 ### Базовый retrieval-пайплайн
-`FAISS + BM25 + exact ref + reranker`
+`FAISS + BM25 + reranker`
 
-### NER-enhanced retrieval-пайплайн
-`FAISS + BM25 + exact ref + entity BM25 + reranker`
+## Архитектуры пайплайнов для НИР (исследуется влияние NER на качество выдачи чанков)
+
+`FAISS vs FAISS + NER` 
 
 ---
 
-## Общая схема работы
+## Общая схема работы (без NER)
 
 ### Шаг 1. Подготовка корпуса
 Сырые документы кладутся в:
@@ -96,14 +86,11 @@
 Строятся:
 - dense index (FAISS)
 - sparse index (BM25 по тексту)
-- при необходимости entity-index для NER-экспериментов
 
 ### Шаг 5. Retrieval
 По вопросу запускаются retrieval-каналы:
 - dense retrieval
 - sparse retrieval
-- exact reference search
-- опционально entity retrieval
 
 ### Шаг 6. Reranking
 Кандидаты объединяются и переставляются reranker-моделью.
