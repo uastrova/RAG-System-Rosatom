@@ -3,7 +3,6 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-
 from rosatom_rag.config import EVAL_DIR
 from rosatom_rag.utils import print_header
 
@@ -13,8 +12,6 @@ DEFAULT_FAISS_K = 200
 DEFAULT_BM25_K = 200
 DEFAULT_CANDIDATES_K = 200
 DEFAULT_NER_WEIGHT = 0.05
-
-
 DEFAULT_QUESTIONS_PATH = EVAL_DIR / "questions.jsonl"
 DEFAULT_QRELS_PATH = EVAL_DIR / "qrels.jsonl"
 DEFAULT_EVAL_OUTPUT_DIR = EVAL_DIR / "final_hybrid_ner_cli"

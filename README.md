@@ -2,17 +2,15 @@
 
 RAG-система для поиска и генерации ответов по нормативно-технической документации.
 
-Проект реализует полный pipeline:
+Проект реализует полный пайплайн:
 
-- ingest PDF/DOCX документов;
-- извлечение текста;
+- извлечение текста из PDF/DOCX документов;
 - разбиение корпуса на чанки;
-- построение FAISS-индекса;
-- BM25-поиск по чанкам;
-- NER-enhanced reranking;
+- построение FAISS и BM25 индексов;
+- FAISS и BM25 поиск по чанкам;
+- NER-ранжирование чанков;
 - генерация ответа через локальную LLM;
-- CLI-интерфейс для пользователя;
-- evaluation pipeline для сравнения retrieval-подходов.
+- консольный интерфейс;
 
 ## Основной pipeline
 
@@ -22,15 +20,15 @@ FAISS + BM25 + RRF + NER/entity reranking + LLM
 
 Пользователь задаёт вопрос, система находит релевантные фрагменты документов, передаёт их в LLM и возвращает ответ с источниками.
 
-## Возможности
-- PDF/DOCX ingest.
-- Chunking нормативных документов.
+### Возможности
+- Поддержка PDF/DOCX документов.
+- Чанкинг документов.
 - FAISS dense retrieval.
 - BM25 sparse retrieval.
-- NER-enhanced reranking.
-- Локальная LLM через llama.cpp или другой OpenAI-compatible server.
+- NER-переранжирование.
+- Локальная LLM через llama.cpp.
 - Консольное меню для запуска RAG.
-- Evaluation для сравнения baseline и NER-enhanced retrieval.
+- Сравнение пайплайнов с NER-переранжированием и без.
 - Метрики: Hit@K, Recall@K, Precision@K, MRR@K, nDCG@K.
 
 ## Структура проекта
@@ -72,14 +70,14 @@ FAISS + BM25 + RRF + NER/entity reranking + LLM
 - исходные PDF/DOCX документы;
 - извлечённые тексты;
 - чанки;
-- FAISS index;
-- NER predictions;
-- chunk-level NER metadata;
-- embedding model;
-- NER model;
-- GGUF LLM model;
-- реальные рабочие NER corpus-файлы.
-- В git оставлены только .gitkeep и example-файлы для демонстрации структуры и форматов.
+- FAISS индекс;
+- предсказания NER;
+- embedding модель;
+- NER модель;
+- GGUF LLM модель;
+- реальные рабочие NER-файлы.
+
+В git оставлены только .gitkeep и примеры файлов для демонстрации структуры и форматов.
 
 ## Установка
 
@@ -136,7 +134,7 @@ python -m rosatom_rag.ingest.make_chunks
 data/processed/chunks/ntd_chunks.jsonl
 ```
 
-### 4. Построить FAISS index
+### 4. Построить FAISS индекс
 
 ```bash
 python -m rosatom_rag.retrieval.build_faiss
@@ -148,18 +146,18 @@ python -m rosatom_rag.retrieval.build_faiss
 data/processed/vectorstore/faiss_ntd/
 ```
 
-## Подготовка NER metadata
+## Дополнение чанков NER-сущностями
 
 ```bash
 python -m rosatom_rag.ner.predict_ner \
-  --output data/ner/predictions/chunk_entities_full_v2.jsonl
+  --output data/ner/predictions/chunk_entities_full.jsonl
 
 python -m rosatom_rag.retrieval.build_chunk_ner_metadata
 ```
 
 Результат:
 ```text
-data/ner/entity_index/chunk_ner_metadata_v2.jsonl
+data/ner/entity_index/chunk_ner_metadata.jsonl
 ```
 
 ## Запуск RAG
@@ -169,17 +167,16 @@ data/ner/entity_index/chunk_ner_metadata_v2.jsonl
 ```text
 data/processed/chunks/ntd_chunks.jsonl
 data/processed/vectorstore/faiss_ntd/
-data/ner/entity_index/chunk_ner_metadata_v2.jsonl
+data/ner/entity_index/chunk_ner_metadata.jsonl
 ```
 
-### Интерактивное меню
+### Консольное меню
 
 ```bash
 python -m rosatom_rag.cli
 ```
 
 Меню:
-
 1 - Получить ответ от RAG системы на свой вопрос
 2 - Запустить сравнение пайплайнов без NER и с NER
 0 - Выход
@@ -193,9 +190,9 @@ python -m rosatom_rag.cli ask \
 ```
 
 
-## Evaluation
+## Исследрвание вклада NER в пайплан
 
-Сравниваются два retrieval-пайплайна:
+Сравниваются два пайплайна:
 
 ```text
 baseline:   FAISS + BM25 + RRF
@@ -203,57 +200,32 @@ enhanced:   FAISS + BM25 + RRF + NER/entity reranking
 ```
 
 
-### Формат questions
+### Формат вопросов
 
 ```jsonl
 {"id": 1, "discipline": "Электротехника", "question": "Согласно СП 484.1311500.2020, какой радиус контроля теплового точечного пожарного извещателя при высоте перекрытия до 3,5 м?", "source_doc_hint": "СП 484.1311500.2020"}
 ```
 
-### Формат qrels
+### Формат релевантных чанков для вопросов
 
 ```jsonl
 {"id": 1, "relevant_chunk_ids": ["chunk_id_from_ntd_chunks_jsonl"]}
 ```
 
-Example-файлы:
+Примеры файлов:
 
 ```text
 data/eval/questions.example.jsonl
 data/eval/qrels.example.jsonl
 ```
 
-### Проверить eval dataset
-
-```bash
-python -m rosatom_rag.eval.validate_dataset \
-  --questions data/eval/questions.jsonl \
-  --qrels data/eval/qrels.jsonl \
-  --chunks data/processed/chunks/ntd_chunks.jsonl
-```
-
-### Запустить сравнение
+### Запустить сравнение пайплайнов
 
 ```bash
 python -m rosatom_rag.cli eval \
   --questions data/eval/questions.jsonl \
   --qrels data/eval/qrels.jsonl \
   --output-dir data/eval/final_hybrid_ner_cli
-```
-
-## Основные команды
-
-```bash
-# RAG интерфейс
-python -m rosatom_rag.cli
-
-# Evaluation
-python -m rosatom_rag.cli eval
-
-# Validate eval dataset
-python -m rosatom_rag.eval.validate_dataset \
-  --questions data/eval/questions.jsonl \
-  --qrels data/eval/qrels.jsonl \
-  --chunks data/processed/chunks/ntd_chunks.jsonl
 ```
 
 
