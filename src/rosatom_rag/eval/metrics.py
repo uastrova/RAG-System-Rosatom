@@ -2,7 +2,7 @@ import math
 from collections import defaultdict
 
 
-# Retrieval-метрики для сравнения ранжированных списков chunk_id.
+# метрики для сравнения ранжированных списков chunk_id.
 
 
 def _top_k(predicted_ids: list[str], k: int) -> list[str]:
