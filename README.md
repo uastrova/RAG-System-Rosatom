@@ -15,7 +15,7 @@ RAG-система для поиска и генерации ответов по
 ## Основной pipeline
 
 ```text
-FAISS + BM25 + RRF + NER/entity reranking + LLM
+FAISS + BM25 + rank-based fusion + NER/entity reranking + LLM
 ```
 
 Пользователь задаёт вопрос, система находит релевантные фрагменты документов, передаёт их в LLM и возвращает ответ с источниками.
@@ -46,7 +46,7 @@ FAISS + BM25 + RRF + NER/entity reranking + LLM
 │   ├── processed/
 │   │   ├── extracted_text/              # извлечённый текст
 │   │   ├── chunks/                      # jsonl чанки
-│   │   └── vectorstore/                 # FAISS index
+│   │   └── vectorstore/                 # FAISS индекс
 │   ├── eval/                            # questions/qrels для оценки
 │   └── ner/
 │       ├── labeled/                     # примеры NER-разметки
@@ -92,15 +92,9 @@ export PYTHONPATH="$PWD/src:$PYTHONPATH"
 ```
 
 ## Настройка LLM
-Проект ожидает OpenAI-compatible endpoint:
+Проект ожидает OpenAI-совместимый API endpoint:
 
 http://127.0.0.1:8080/v1
-
-Пример:
-```bash
-cp .env.example .env.local
-export LLAMA_MODEL="bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M"
-```
 
 Инструкция по llama.cpp:
 ```text
@@ -195,8 +189,8 @@ python -m rosatom_rag.cli ask \
 Сравниваются два пайплайна:
 
 ```text
-baseline:   FAISS + BM25 + RRF
-enhanced:   FAISS + BM25 + RRF + NER/entity reranking
+baseline:   FAISS + BM25 + rank-based fusion
+enhanced:   FAISS + BM25 + rank-based fusion + NER/entity reranking
 ```
 
 
