@@ -6,7 +6,7 @@ RAG-система для поиска и генерации ответов по
 
 - извлечение текста из PDF/DOCX документов;
 - разбиение корпуса на чанки;
-- построение FAISS и BM25 индексов;
+- построение FAISS индекса;
 - FAISS и BM25 поиск по чанкам;
 - NER-ранжирование чанков;
 - генерация ответа через локальную LLM;
@@ -116,7 +116,7 @@ python -m rosatom_rag.ingest.extract_pdf_text
 python -m rosatom_rag.ingest.extract_docx_text
 ```
 
-### 3. Сделать чанки
+### 3. Разбить корпус на чанки
 
 ```bash
 python -m rosatom_rag.ingest.make_chunks
@@ -128,7 +128,17 @@ python -m rosatom_rag.ingest.make_chunks
 data/processed/chunks/ntd_chunks.jsonl
 ```
 
-### 4. Построить FAISS индекс
+Этот файл является основным корпусом для дальнейшего поиска: по нему строится FAISS-индекс, а BM25-индекс создаётся в памяти при запуске поиска.
+### 4. Проверить наличие embedding-модели
+
+Перед построением FAISS-индекса embedding-модель должна лежать в директории:
+
+```text
+models/emb/sbert_large_nlu_ru/
+```
+
+
+### 5. Построить FAISS индекс
 
 ```bash
 python -m rosatom_rag.retrieval.build_faiss
@@ -140,8 +150,28 @@ python -m rosatom_rag.retrieval.build_faiss
 data/processed/vectorstore/faiss_ntd/
 ```
 
-## Дополнение чанков NER-сущностями
+После этого готовы основные артефакты корпуса:
 
+```text
+data/processed/chunks/ntd_chunks.jsonl
+data/processed/vectorstore/faiss_ntd/
+```
+
+BM25 не требует отдельной команды построения: индекс создаётся автоматически из ntd_chunks.jsonl при первом BM25-поиске.
+
+## Подготовка NER-сущностей для поиска
+
+### 1. Проверить наличие NER-модели
+
+NER-модель должна лежать в директории:
+
+```text
+models/ner/rubert_ner_manual_v3_full_finetune/
+```
+
+Модель не хранится в git. Её нужно либо обучить отдельно, либо положить готовую модель в эту директорию.
+
+### 2. Получить NER-предсказания для чанков
 ```bash
 python -m rosatom_rag.ner.predict_ner \
   --output data/ner/predictions/chunk_entities_full.jsonl
