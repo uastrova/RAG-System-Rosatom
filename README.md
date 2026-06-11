@@ -29,7 +29,7 @@ FAISS + BM25 + RRF + NER/entity reranking + LLM
 - BM25 sparse retrieval.
 - NER-enhanced reranking.
 - Локальная LLM через llama.cpp или другой OpenAI-compatible server.
-- CLI-меню для запуска RAG.
+- Консольное меню для запуска RAG.
 - Evaluation для сравнения baseline и NER-enhanced retrieval.
 - Метрики: Hit@K, Recall@K, Precision@K, MRR@K, nDCG@K.
 
@@ -52,11 +52,11 @@ FAISS + BM25 + RRF + NER/entity reranking + LLM
 │   ├── eval/                            # questions/qrels для оценки
 │   └── ner/
 │       ├── labeled/                     # примеры NER-разметки
-│       ├── predictions/                 # generated locally
-│       └── entity_index/                # generated locally
+│       ├── predictions/                 # локальная генерация
+│       └── entity_index/                # локальная генерация
 ├── models/
-│   ├── emb/                             # embedding model
-│   └── ner/                             # NER model
+│   ├── emb/                             # embedding модель
+│   └── ner/                             # NER модель
 └── src/rosatom_rag/
     ├── cli.py
     ├── config.py
@@ -243,7 +243,7 @@ python -m rosatom_rag.cli eval \
 ## Основные команды
 
 ```bash
-# RAG CLI
+# RAG интерфейс
 python -m rosatom_rag.cli
 
 # Evaluation
@@ -264,16 +264,3 @@ docs/install_python_env.md
 docs/install_llama_cpp.md
 ```
 
-
-## Статус проекта
-Исследовательский прототип RAG-системы для нормативно-технической документации.
-
-Фокус проекта:
-
-retrieval по нормативным документам;
-
-сравнение baseline и NER-enhanced retrieval;
-
-локальная генерация ответа через LLM;
-
-удобный CLI/evaluation pipeline.
