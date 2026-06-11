@@ -1,100 +1,279 @@
 # Rosatom RAG
 
-## Идея проекта
+RAG-система для поиска и генерации ответов по нормативно-технической документации.
 
-Цель проекта — построить систему, которая:
+Проект реализует полный pipeline:
 
-1. принимает корпус нормативных документов;
-2. извлекает из них текст;
-3. разбивает текст на чанки;
-4. строит поисковые индексы;
-5. находит наиболее релевантные фрагменты по запросу;
-6. передает найденный контекст в локальную LLM;
-7. получает итоговый ответ с опорой на retrieved-контекст.
+- ingest PDF/DOCX документов;
+- извлечение текста;
+- разбиение корпуса на чанки;
+- построение FAISS-индекса;
+- BM25-поиск по чанкам;
+- NER-enhanced reranking;
+- генерация ответа через локальную LLM;
+- CLI-интерфейс для пользователя;
+- evaluation pipeline для сравнения retrieval-подходов.
 
-## Что уже реализовано
+## Основной pipeline
 
-### 1. Ingest документов
-Поддерживается извлечение текста из:
-- PDF
-- DOCX
+```text
+FAISS + BM25 + RRF + NER/entity reranking + LLM
+```
 
-Результат сохраняется в текстовом виде в `data/processed/extracted_text`.
+Пользователь задаёт вопрос, система находит релевантные фрагменты документов, передаёт их в LLM и возвращает ответ с источниками.
 
-### 2. Чанкование корпуса
-Извлеченные тексты разбиваются на чанки и сохраняются в:
-- `data/processed/chunks/ntd_chunks.jsonl`
+## Возможности
+- PDF/DOCX ingest.
+- Chunking нормативных документов.
+- FAISS dense retrieval.
+- BM25 sparse retrieval.
+- NER-enhanced reranking.
+- Локальная LLM через llama.cpp или другой OpenAI-compatible server.
+- CLI-меню для запуска RAG.
+- Evaluation для сравнения baseline и NER-enhanced retrieval.
+- Метрики: Hit@K, Recall@K, Precision@K, MRR@K, nDCG@K.
 
-Для чанков сохраняются:
-- `chunk_id`
-- `source_file`
-- `source_stem`
-- `page_num`
-- позиционная информация
-- текст чанка
+## Структура проекта
 
-### 3. Dense retrieval
-Реализовано построение FAISS-индекса по embeddings чанков.
+```text
+.
+├── README.md
+├── requirements.txt
+├── .env.example
+├── docs/
+│   ├── install_llama_cpp.md
+│   └── install_python_env.md
+├── data/
+│   ├── raw/ntd/                         # сюда кладутся PDF/DOCX
+│   ├── processed/
+│   │   ├── extracted_text/              # извлечённый текст
+│   │   ├── chunks/                      # jsonl чанки
+│   │   └── vectorstore/                 # FAISS index
+│   ├── eval/                            # questions/qrels для оценки
+│   └── ner/
+│       ├── labeled/                     # примеры NER-разметки
+│       ├── predictions/                 # generated locally
+│       └── entity_index/                # generated locally
+├── models/
+│   ├── emb/                             # embedding model
+│   └── ner/                             # NER model
+└── src/rosatom_rag/
+    ├── cli.py
+    ├── config.py
+    ├── ingest/
+    ├── retrieval/
+    ├── ner/
+    ├── llm/
+    └── eval/
+```    
+## Что не хранится в git
 
-Используется локальная embedding-модель:
-- `SentenceTransformer`
-- обертка `LocalSentenceTransformerEmbeddings`
+В репозитории не хранятся:
+- исходные PDF/DOCX документы;
+- извлечённые тексты;
+- чанки;
+- FAISS index;
+- NER predictions;
+- chunk-level NER metadata;
+- embedding model;
+- NER model;
+- GGUF LLM model;
+- реальные рабочие NER corpus-файлы.
+- В git оставлены только .gitkeep и example-файлы для демонстрации структуры и форматов.
 
-### 4. Sparse retrieval
-Реализован BM25 по текстам чанков.
+## Установка
 
-### 5. Reranking
-После объединения кандидатов из разных retrieval-каналов применяется reranker.
+```bash
+python3 -m venv .env
+source .env/bin/activate
 
-### 6. Генерация ответа локальной LLM
-Ответ строится через локальный `llama.cpp` сервер с OpenAI-compatible API.
+python -m pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
 
-### 7. NER-ветка
-Отдельно реализован экспериментальный NER-пайплайн:
-- предсказание сущностей по чанкам;
-- сохранение сущностей в `data/ner/predictions/...`;
-- сравнение baseline retrieval и NER-enhanced retrieval.
+export PYTHONPATH="$PWD/src:$PYTHONPATH"
+```
 
----
+## Настройка LLM
+Проект ожидает OpenAI-compatible endpoint:
 
-## Текущая архитектура пайплайна (для кейса)
+http://127.0.0.1:8080/v1
 
-### Базовый retrieval-пайплайн
-`FAISS + BM25 + reranker`
+Пример:
+```bash
+cp .env.example .env.local
+export LLAMA_MODEL="bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M"
+```
 
-## Архитектуры пайплайнов для НИР (исследуется влияние NER на качество выдачи чанков)
+Инструкция по llama.cpp:
+```text
+docs/install_llama_cpp.md
+```
 
-`FAISS vs FAISS + NER` 
+## Подготовка корпуса
 
----
+### 1. Положить документы
 
-## Общая схема работы (без NER)
+```text
+data/raw/ntd/
+```
 
-### Шаг 1. Подготовка корпуса
-Сырые документы кладутся в:
-- `data/raw/ntd`
+### 2. Извлечь текст
 
-### Шаг 2. Извлечение текста
-Из PDF и DOCX извлекается текст и сохраняется в:
-- `data/processed/extracted_text`
+```bash
+python -m rosatom_rag.ingest.extract_pdf_text
+python -m rosatom_rag.ingest.extract_docx_text
+```
 
-### Шаг 3. Чанкование
-Тексты разбиваются на чанки:
-- `data/processed/chunks/ntd_chunks.jsonl`
+### 3. Сделать чанки
 
-### Шаг 4. Построение индексов
-Строятся:
-- dense index (FAISS)
-- sparse index (BM25 по тексту)
+```bash
+python -m rosatom_rag.ingest.make_chunks
+```
 
-### Шаг 5. Retrieval
-По вопросу запускаются retrieval-каналы:
-- dense retrieval
-- sparse retrieval
+Результат:
 
-### Шаг 6. Reranking
-Кандидаты объединяются и переставляются reranker-моделью.
+```text
+data/processed/chunks/ntd_chunks.jsonl
+```
 
-### Шаг 7. Генерация ответа
-Финальный top-k контекст передается в локальную LLM, которая формирует ответ.
+### 4. Построить FAISS index
 
+```bash
+python -m rosatom_rag.retrieval.build_faiss
+```
+
+Результат:
+
+```text
+data/processed/vectorstore/faiss_ntd/
+```
+
+## Подготовка NER metadata
+
+```bash
+python -m rosatom_rag.ner.predict_ner \
+  --output data/ner/predictions/chunk_entities_full_v2.jsonl
+
+python -m rosatom_rag.retrieval.build_chunk_ner_metadata
+```
+
+Результат:
+```text
+data/ner/entity_index/chunk_ner_metadata_v2.jsonl
+```
+
+## Запуск RAG
+
+Перед запуском должны быть готовы:
+
+```text
+data/processed/chunks/ntd_chunks.jsonl
+data/processed/vectorstore/faiss_ntd/
+data/ner/entity_index/chunk_ner_metadata_v2.jsonl
+```
+
+### Интерактивное меню
+
+```bash
+python -m rosatom_rag.cli
+```
+
+Меню:
+
+1 - Получить ответ от RAG системы на свой вопрос
+2 - Запустить сравнение пайплайнов без NER и с NER
+0 - Выход
+
+
+### Задать вопрос без меню
+
+```bash
+python -m rosatom_rag.cli ask \
+  --question "Согласно СП 484.1311500.2020, какой радиус контроля теплового точечного пожарного извещателя при высоте перекрытия до 3,5 м?"
+```
+
+
+## Evaluation
+
+Сравниваются два retrieval-пайплайна:
+
+```text
+baseline:   FAISS + BM25 + RRF
+enhanced:   FAISS + BM25 + RRF + NER/entity reranking
+```
+
+
+### Формат questions
+
+```jsonl
+{"id": 1, "discipline": "Электротехника", "question": "Согласно СП 484.1311500.2020, какой радиус контроля теплового точечного пожарного извещателя при высоте перекрытия до 3,5 м?", "source_doc_hint": "СП 484.1311500.2020"}
+```
+
+### Формат qrels
+
+```jsonl
+{"id": 1, "relevant_chunk_ids": ["chunk_id_from_ntd_chunks_jsonl"]}
+```
+
+Example-файлы:
+
+```text
+data/eval/questions.example.jsonl
+data/eval/qrels.example.jsonl
+```
+
+### Проверить eval dataset
+
+```bash
+python -m rosatom_rag.eval.validate_dataset \
+  --questions data/eval/questions.jsonl \
+  --qrels data/eval/qrels.jsonl \
+  --chunks data/processed/chunks/ntd_chunks.jsonl
+```
+
+### Запустить сравнение
+
+```bash
+python -m rosatom_rag.cli eval \
+  --questions data/eval/questions.jsonl \
+  --qrels data/eval/qrels.jsonl \
+  --output-dir data/eval/final_hybrid_ner_cli
+```
+
+## Основные команды
+
+```bash
+# RAG CLI
+python -m rosatom_rag.cli
+
+# Evaluation
+python -m rosatom_rag.cli eval
+
+# Validate eval dataset
+python -m rosatom_rag.eval.validate_dataset \
+  --questions data/eval/questions.jsonl \
+  --qrels data/eval/qrels.jsonl \
+  --chunks data/processed/chunks/ntd_chunks.jsonl
+```
+
+
+## Документация
+
+```text
+docs/install_python_env.md
+docs/install_llama_cpp.md
+```
+
+
+## Статус проекта
+Исследовательский прототип RAG-системы для нормативно-технической документации.
+
+Фокус проекта:
+
+retrieval по нормативным документам;
+
+сравнение baseline и NER-enhanced retrieval;
+
+локальная генерация ответа через LLM;
+
+удобный CLI/evaluation pipeline.
