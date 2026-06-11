@@ -1,27 +1,27 @@
-# Python
+# python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Virtual env
+# env
 .env/
 venv/
 .venv/
 
-# System
+# system
 .DS_Store
 .idea/
 .vscode/
 
-# Large project data
+# данные 
 data/raw/
 data/processed/
 data/eval/
 data/ner/predictions/
 data/ner/entity_index/
 
-# Models and indexes
+# модели и индексы
 models/
 *.bin
 *.safetensors
@@ -29,13 +29,12 @@ models/
 *.faiss
 *.pkl
 
-# Secrets
+# secrets
 .env
 *.key
 *.pem
 
-# Keep public example files and folder placeholders
-# Keep only public examples and empty folder placeholders
+# только пустые папки и примеры файлов
 !data/
 !data/eval/
 data/eval/*
@@ -74,21 +73,13 @@ models/emb/*
 models/ner/*
 !models/ner/.gitkeep
 
-# Local drafts
-pre-zip/
-notebooks/test.ipynb
-
-# Local drafts
-pre-zip/
-notebooks/test.ipynb
-
-# Generated HF dataset splits
+# сгенерированные Hugging Face сплиты датасета
 data/ner/splits/hf_rubert_dataset_no_docnum_v1/
 data/ner/splits/*/train/
 data/ner/splits/*/validation/
 *.arrow
 
-# Local NER labeled data
+# размеченные данные 
 data/ner/labeled/manual_corpus.json
 data/ner/labeled/manual_corpus_final.jsonl
 data/ner/labeled/*.json
