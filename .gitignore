@@ -33,3 +33,66 @@ models/
 .env
 *.key
 *.pem
+
+# Keep public example files and folder placeholders
+# Keep only public examples and empty folder placeholders
+!data/
+!data/eval/
+data/eval/*
+!data/eval/.gitkeep
+!data/eval/*.example.jsonl
+
+!data/raw/
+!data/raw/ntd/
+data/raw/ntd/*
+!data/raw/ntd/.gitkeep
+
+!data/processed/
+!data/processed/extracted_text/
+data/processed/extracted_text/*
+!data/processed/extracted_text/.gitkeep
+!data/processed/chunks/
+data/processed/chunks/*
+!data/processed/chunks/.gitkeep
+!data/processed/vectorstore/
+data/processed/vectorstore/*
+!data/processed/vectorstore/.gitkeep
+
+!data/ner/
+!data/ner/predictions/
+data/ner/predictions/*
+!data/ner/predictions/.gitkeep
+!data/ner/entity_index/
+data/ner/entity_index/*
+!data/ner/entity_index/.gitkeep
+
+!models/
+!models/emb/
+models/emb/*
+!models/emb/.gitkeep
+!models/ner/
+models/ner/*
+!models/ner/.gitkeep
+
+# Local drafts
+pre-zip/
+notebooks/test.ipynb
+
+# Local drafts
+pre-zip/
+notebooks/test.ipynb
+
+# Generated HF dataset splits
+data/ner/splits/hf_rubert_dataset_no_docnum_v1/
+data/ner/splits/*/train/
+data/ner/splits/*/validation/
+*.arrow
+
+# Local NER labeled data
+data/ner/labeled/manual_corpus.json
+data/ner/labeled/manual_corpus_final.jsonl
+data/ner/labeled/*.json
+data/ner/labeled/*.jsonl
+!data/ner/labeled/*.example.json
+!data/ner/labeled/*.example.jsonl
+!data/ner/labeled/.gitkeep
